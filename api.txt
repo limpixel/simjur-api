@@ -1,0 +1,4 @@
+database_name = simjur_api
+database_password = d6F]ZKv#Z,]u
+url_project = https://uxzmfxxjtpeipouwxplm.supabase.co
+api_key = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4em1meHhqdHBlaXBvdXd4cGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNjMxNzEsImV4cCI6MjA3NzczOTE3MX0._UFXTLyIGo2-m5qQ-ZFaP0nlX6ntC9-kpFSuI32hbPI
