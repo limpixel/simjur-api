@@ -1,4 +1,3 @@
-
 # supabase-api-simjur
 
 Singkat: proyek Next.js (App Router) sederhana yang digunakan sebagai starter untuk API/Frontend dengan konfigurasi Tailwind/PostCSS.
