@@ -61,7 +61,7 @@ yarn run dev
 **body** : <br/>
 | key            | Value          |
 | -------------- | -------------- |
-| name [ Text ]  | Danu         |
+| name [ Text ]  | admin         |
 | roles_id [ Text ] | 1 |
 | description [ Text ] | admin user |
 | password [ Text ] | 12345678 |
