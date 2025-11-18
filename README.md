@@ -69,8 +69,16 @@ yarn run dev
 **output** : 
 ```JSON
 {
-    "code": "success",
-    "message": "Account has been registerd"
+    "message": "User registered successfully",
+    "data": [
+        {
+            "id": 13,
+            "name": "admin",
+            "roles_id": 1,
+            "description": "admin user",
+            "password": "$2b$10$2si0cAfV4snLF/e39T8lMOzAWSqRxEh3rWi.Eo8APcUNtei84KW2a"
+        }
+    ]
 }
 ```
 **Penjelasan** : <br/>
