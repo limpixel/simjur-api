@@ -21,11 +21,12 @@
 </div>
 
 
-
+----
 
 # Daftar Pustaka : 
 - [Anggota Tim :](#anggota-tim-)
 - [Daftar Pustaka :](#daftar-pustaka-)
+- [Struktur Direktori File :](#struktur-direktori-file-)
 - [Installasi :](#installasi-)
 - [API Testing](#api-testing)
 - [Regiser - POST](#regiser---post)
@@ -33,6 +34,54 @@
     - [Error Duplicate - 500](#error-duplicate---500)
 - [Login](#login)
     - [Success - Has Been Login](#success---has-been-login)
+    - [Error :](#error-)
+- [User](#user)
+  - [GET RESPONSE](#get-response)
+    - [Success - Has Been Login](#success---has-been-login-1)
+    - [Error - Berier token Expired :](#error---berier-token-expired-)
+- [USER](#user-1)
+    - [GET](#get)
+    - [POST](#post)
+    - [PUT](#put)
+    - [DELET](#delet)
+- [Roles](#roles)
+    - [GET](#get-1)
+    - [POST](#post-1)
+
+
+# Struktur Direktori File : 
+```terminal
+backend-simjur-api/
+├─ simjur-api-main/
+│  ├─ app/
+│  │  ├─ api/
+│  │  │  ├─ Access Module/
+│  │  │  ├─ auth/
+│  │  │  │  ├─ login/
+│  │  │  │  │  route.ts
+│  │  │  ├─ register/
+│  │  │  │  └─ route.ts
+│  │  │  └─ Module/
+│  │  │     └─ route.ts
+│  │  ├─ lib/
+│  │  │  └─ supabaseClient.ts
+│  │  ├─ favicon.ico
+│  │  ├─ globals.css
+│  │  ├─ layout.tsx
+│  │  └─ page.tsx
+│  ├─ public/
+│  │  │ 
+│  │  └─ (aset publik)
+│  ├─ .gitignore
+│  ├─ api.txt
+│  ├─ LICENSE
+│  ├─ next.config.ts
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ postcss.config.mjs
+│  ├─ README.md
+│  └─ tsconfig.json
+```
 
 # Installasi : 
 - **npm**
@@ -106,3 +155,144 @@ yarn run dev
 
 # Login 
 ### Success - Has Been Login
+
+**body** : <br/>
+| key            | Value          |
+| -------------- | -------------- |
+| name [ Text ]  | Danu         |
+| password [ Text ] | 12345678 |
+
+**Output** :
+```json 
+{
+    "message": "Login success",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwibmFtZSI6ImRhbnUiLCJyb2xlc19pZCI6MSwiaWF0IjoxNzYzNjk3ODQ5LCJleHAiOjE3NjM3MDUwNDl9.Ul6b7dTpK-xEN9MPMk5gzjEvYNGPVRF7an_6mOUy31c",
+    "user": {
+        "id": 4,
+        "name": "danu",
+        "roles_id": 1
+    }
+}
+```
+
+
+### Error : 
+**body** : <br/>
+| key            | Value          |
+| -------------- | -------------- |
+| name [ Text ]  | Haji Kembar         |
+| password [ Text ] | 12345678 |
+
+**Output** :
+```json 
+{
+    "error": "User not found"
+}
+```
+
+# User 
+## GET RESPONSE
+### Success - Has Been Login
+
+**API TESTING **
+
+
+**Output** :
+```json 
+{
+    "users": [
+        {
+            "id": 2,
+            "name": "halim",
+            "description": "admin user",
+            "roles_id": 1,
+            "roles_table": {
+                "id_roles": 1,
+                "keterangan": "ini admin besar",
+                "name_roles": "admin"
+            }
+        },
+        {
+            "id": 3,
+            "name": "rangga",
+            "description": "admin user",
+            "roles_id": 1,
+            "roles_table": {
+                "id_roles": 1,
+                "keterangan": "ini admin besar",
+                "name_roles": "admin"
+            }
+        },
+        {
+            "id": 4,
+            "name": "danu",
+            "description": "admin user",
+            "roles_id": 1,
+            "roles_table": {
+                "id_roles": 1,
+                "keterangan": "ini admin besar",
+                "name_roles": "admin"
+            }
+        },
+    ]
+}
+```
+
+
+### Error - Berier token Expired : 
+**body** : <br/>
+| key            | Value          |
+| -------------- | -------------- |
+| name [ Text ]  | Haji Kembar         |
+| password [ Text ] | 12345678 |
+
+**Output** :
+```json 
+{
+    "error": "Invalid or expired token. Please login again to get a new token.",
+    "code": "INVALID_TOKEN",
+    "timeStamp": "Wed Nov 26 2025 03:03:06 GMT+0700 (Western Indonesia Time)"
+}
+```
+
+# USER 
+### GET
+### POST
+### PUT 
+### DELET 
+
+
+# Roles
+### GET
+
+### POST 
+
+**Success**
+```json
+{
+    "message": "Role created successfully",
+    "role": {
+        "id_roles": 2,
+        "name_roles": "administrasi",
+        "keterangan": "Role dengan akses penuh"
+    }
+}
+```
+
+**error**
+- Invalid or Expired Token 
+```json 
+{
+    "error": "Invalid or expired token. Please login again to get a new token.",
+    "code": "INVALID_TOKEN",
+    "timeStamp": "Wed Nov 26 2025 03:03:06 GMT+0700 (Western Indonesia Time)"
+}
+```
+- Inavalid Duplicatee create
+```json 
+{
+    "error": "duplicate key value violates unique constraint \"roles_table_pkey\"",
+    "code": "23505",
+    "timeStamp": "Wed Nov 26 2025 03:04:37 GMT+0700 (Western Indonesia Time)"
+}
+```
