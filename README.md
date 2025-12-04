@@ -1,6 +1,6 @@
 
 <div align="center">
-    <img width="380" src="https://i.pinimg.com/originals/6b/8b/9d/6b8b9d3c4c75eaafb73285ddd310a346.gif" />
+    <img width="380" src="https://i.pinimg.com/originals/13/9b/3b/139b3b57a041f24fb792d94d022baa2c.gif" />
 </div>
 <br/>
 
@@ -16,7 +16,7 @@
 
 | ![Avatar 1](public/readme/sigma-1.jpeg) | ![Avatar 2](public/readme/sigma-2.jpeg) | ![Avatar 3](public/readme/sigma-3.jpeg) | ![Avatar 4](public/readme/sigma-4.jpeg) | ![Avatar 5](https://i.pinimg.com/1200x/eb/ee/f6/ebeef61d5884dba8c382eca6b9de87ca.jpg) |
 |:----:|:----:|:----:|:----:|:----:|
-| [Nama Anggota 1]<br/>Backend / Frontend | [Nama Anggota 2]<br/>Backend / Frontend | [Nama Anggota 3]<br/>Backend / Frontend | [Nama Anggota 4]<br/>Backend / Frontend | [Nama Anggota 5]<br/>Backend / Frontend |
+| Abdul Halim<br/>Backend Developer | Anugerah Rachmat Indriansyah<br/> Frontend Developer | M. Rangga Fabiano M <br/>Backend Developer | Nail Rizq Widiyanto<br/> Frontend Developer | Gedebong Pisang <br/> Analyst System |
 
 </div>
 
@@ -37,50 +37,84 @@
     - [Error :](#error-)
 - [User](#user)
   - [GET RESPONSE](#get-response)
-    - [Success - Has Been Login](#success---has-been-login-1)
+    - [Get All User](#get-all-user)
+    - [Get User By Id](#get-user-by-id)
     - [Error - Berier token Expired :](#error---berier-token-expired-)
-- [USER](#user-1)
-    - [GET](#get)
     - [POST](#post)
     - [PUT](#put)
     - [DELET](#delet)
 - [Roles](#roles)
-    - [GET](#get-1)
+    - [GET](#get)
     - [POST](#post-1)
+    - [**Success \[200\]** ](#success-200--1)
+    - [Error Duplicate - 500](#error-duplicate---500-1)
 
 
 # Struktur Direktori File : 
-```terminal
-backend-simjur-api/
-├─ simjur-api-main/
-│  ├─ app/
-│  │  ├─ api/
-│  │  │  ├─ Access Module/
-│  │  │  ├─ auth/
-│  │  │  │  ├─ login/
-│  │  │  │  │  route.ts
-│  │  │  ├─ register/
+```json
+supabase-api-simjur/
+├─ app/
+│  ├─ api/
+│  │  ├─ auth/
+│  │  │  ├─ login/
 │  │  │  │  └─ route.ts
-│  │  │  └─ Module/
+│  │  │  └─ register/
 │  │  │     └─ route.ts
-│  │  ├─ lib/
-│  │  │  └─ supabaseClient.ts
-│  │  ├─ favicon.ico
-│  │  ├─ globals.css
-│  │  ├─ layout.tsx
-│  │  └─ page.tsx
-│  ├─ public/
-│  │  │ 
-│  │  └─ (aset publik)
-│  ├─ .gitignore
-│  ├─ api.txt
-│  ├─ LICENSE
-│  ├─ next.config.ts
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ postcss.config.mjs
-│  ├─ README.md
-│  └─ tsconfig.json
+│  │  ├─ user/
+│  │  │  ├─ route.ts
+│  │  │  └─ [id]/
+│  │  │     └─ route.ts
+│  │  ├─ roles/
+│  │  │  └─ route.ts
+│  │  ├─ transaksi/
+│  │  │  ├─ route.ts
+│  │  │  └─ [id]/
+│  │  │     └─ route.ts
+│  │  ├─ module/
+│  │  │  └─ route.ts
+│  │  ├─ module_access/
+│  │  │  └─ route.ts
+│  │  ├─ pengajuan/
+│  │  │  ├─ tor/
+│  │  │  │  └─ route.ts
+│  │  │  └─ lpj/
+│  │  │     └─ route.ts
+│  │  ├─ archive/
+│  │  │  ├─ tor/
+│  │  │  │  └─ route.ts
+│  │  │  └─ lpj/
+│  │  │     └─ route.ts
+│  │  └─ test/
+│  │     └─ route.ts
+│  ├─ lib/
+│  │  ├─ supabaseClient.ts
+│  │  ├─ auth.ts
+│  │  └─ middleware.ts
+│  ├─ favicon.ico
+│  ├─ globals.css
+│  ├─ layout.tsx
+│  └─ page.tsx
+├─ public/
+│  ├─ readme/
+│  │  ├─ sigma-1.jpeg
+│  │  ├─ sigma-2.jpeg
+│  │  ├─ sigma-3.jpeg
+│  │  ├─ sigma-4.jpeg
+│  │  └─ sigma-5.jpeg
+│  ├─ file.svg
+│  ├─ globe.svg
+│  ├─ next.svg
+│  ├─ vercel.svg
+│  └─ window.svg
+├─ .gitignore
+├─ LICENSE
+├─ README.md
+├─ api.txt
+├─ next.config.ts
+├─ package-lock.json
+├─ package.json
+├─ postcss.config.mjs
+└─ tsconfig.json
 ```
 
 # Installasi : 
@@ -191,11 +225,15 @@ yarn run dev
 ```
 
 # User 
+
 ## GET RESPONSE
-### Success - Has Been Login
 
-**API TESTING **
+### Get All User
 
+**Link :**
+```terminal
+http://localhost:3000/api/user
+```
 
 **Output** :
 ```json 
@@ -238,6 +276,28 @@ yarn run dev
 }
 ```
 
+### Get User By Id 
+**Link :**
+```terminal
+http://localhost:3000/api/user/2
+```
+
+```json 
+{
+    "user": {
+        "id": 2,
+        "name": "halim",
+        "description": "admin user",
+        "roles_id": 1,
+        "roles_table": {
+            "id_roles": 1,
+            "keterangan": "ini admin besar",
+            "name_roles": "admin"
+        }
+    }
+}
+```
+
 
 ### Error - Berier token Expired : 
 **body** : <br/>
@@ -255,10 +315,49 @@ yarn run dev
 }
 ```
 
-# USER 
-### GET
 ### POST
+**body** : <br/>
+| key            | Value          |
+| -------------- | -------------- |
+| name [ Text ]  | admin         |
+| roles_id [ Text ] | 1 |
+| description [ Text ] | admin user |
+| password [ Text ] | 12345678 |
+
+**output** : 
+```JSON
+{
+    "message": "User registered successfully",
+    "data": [
+        {
+            "id": 13,
+            "name": "admin",
+            "roles_id": 1,
+            "description": "admin user",
+            "password": "$2b$10$2si0cAfV4snLF/e39T8lMOzAWSqRxEh3rWi.Eo8APcUNtei84KW2a"
+        }
+    ]
+}
+```
+
 ### PUT 
+
+
+**OUTPUT :**
+```json
+{
+    "message": "User updated successfully",
+    "user": {
+        "id": 2,
+        "name": "Halim",
+        "roles_id": 1,
+        "description": "Updated description",
+        "password": "$2b$10$Zab.moFLVgq8kSD2Phb4HOrukXP3F4uV6eS5bxVm8yTjnzSxCMCxS",
+        "updated_at": "2025-11-26T03:02:34.97"
+    }
+}
+```
+
 ### DELET 
 
 
@@ -266,6 +365,7 @@ yarn run dev
 ### GET
 
 ### POST 
+### **Success [200]** <br/>
 
 **Success**
 ```json
@@ -278,6 +378,29 @@ yarn run dev
     }
 }
 ```
+
+
+### Error Duplicate - 500
+**body** : <br/>
+| key            | Value          |
+| -------------- | -------------- |
+| name [ Text ]  | Danu         |
+| roles_id [ Text ] | 1 |
+| description [ Text ] | admin user |
+| password [ Text ] | 12345678 |
+
+**output** : 
+```JSON
+{
+    "error": "duplicate key value violates unique constraint \"user_list_password_key\""
+}
+```
+**Penjelasan** : <br/>
+>Ketika sebuah akun yag sudah terdaftar maka, tidak bisa di gunakan dan tidak menerima sebuah duplikat data.
+<br/>
+
+---
+
 
 **error**
 - Invalid or Expired Token 
