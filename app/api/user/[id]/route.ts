@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
 import { verifyTokenFromRequest } from "@/app/lib/auth";
+import bcrypt from "bcryptjs";
 
 // GET → ambil user berdasarkan ID
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -13,6 +14,9 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       .select(`
         id,
         name,
+        email,
+        nim,
+        program_studi,
         description,
         roles_id,
         roles_table (
@@ -46,25 +50,78 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   try {
     verifyTokenFromRequest(req);
     const { id } = await context.params;
-    const { name, description, roles_id } = await req.json();
+    const { name, email, nim, program_studi, description, roles_id, password } = await req.json();
 
-    if (!name || !roles_id) {
+    if (!name || !email || !nim || !program_studi || !roles_id) {
       return NextResponse.json(
-        { error: "Name and roles_id are required" },
+        { error: "Name, email, nim, program_studi, and roles_id are required" },
         { status: 400 }
       );
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    }
+
+    // Check for existing email (excluding current user)
+    const { data: existingEmail } = await backendSupabase
+      .from("user_list")
+      .select("email")
+      .eq("email", email)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (existingEmail) {
+      return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+    }
+
+    // Check for existing NIM (excluding current user)
+    const { data: existingNim } = await backendSupabase
+      .from("user_list")
+      .select("nim")
+      .eq("nim", nim)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (existingNim) {
+      return NextResponse.json({ error: "NIM already exists" }, { status: 409 });
+    }
+
+    const updateData: any = {
+      name,
+      email,
+      nim,
+      program_studi,
+      description: description || null,
+      roles_id,
+      updated_at: new Date()
+    };
+
+    // Hash password if provided
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
     const { data, error } = await backendSupabase
       .from("user_list")
-      .update({
-        name,
-        description: description || null,
-        roles_id,
-        updated_at: new Date()
-      })
+      .update(updateData)
       .eq("id", id)
-      .select()
+      .select(`
+        id,
+        name,
+        email,
+        nim,
+        program_studi,
+        description,
+        roles_id,
+        roles_table (
+          id_roles,
+          name_roles,
+          keterangan
+        )
+      `)
       .single();
 
     if (error) {
@@ -95,12 +152,59 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   try {
     verifyTokenFromRequest(req);
     const { id } = await context.params;
-    const { name, description, roles_id } = await req.json();
+    const { name, email, nim, program_studi, description, roles_id, password } = await req.json();
 
     const updateData: any = {};
+    
     if (name) updateData.name = name;
+    
+    if (email) {
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      }
+      
+      // Check for existing email (excluding current user)
+      const { data: existingEmail } = await backendSupabase
+        .from("user_list")
+        .select("email")
+        .eq("email", email)
+        .neq("id", id)
+        .maybeSingle();
+
+      if (existingEmail) {
+        return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+      }
+      
+      updateData.email = email;
+    }
+    
+    if (nim) {
+      // Check for existing NIM (excluding current user)
+      const { data: existingNim } = await backendSupabase
+        .from("user_list")
+        .select("nim")
+        .eq("nim", nim)
+        .neq("id", id)
+        .maybeSingle();
+
+      if (existingNim) {
+        return NextResponse.json({ error: "NIM already exists" }, { status: 409 });
+      }
+      
+      updateData.nim = nim;
+    }
+    
+    if (program_studi) updateData.program_studi = program_studi;
     if (description !== undefined) updateData.description = description;
     if (roles_id) updateData.roles_id = roles_id;
+    
+    // Hash password if provided
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+    
     updateData.updated_at = new Date();
 
     if (Object.keys(updateData).length === 1) { // hanya updated_at
@@ -114,7 +218,20 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       .from("user_list")
       .update(updateData)
       .eq("id", id)
-      .select()
+      .select(`
+        id,
+        name,
+        email,
+        nim,
+        program_studi,
+        description,
+        roles_id,
+        roles_table (
+          id_roles,
+          name_roles,
+          keterangan
+        )
+      `)
       .single();
 
     if (error) {

@@ -8,18 +8,18 @@ export async function POST(req: Request) {
     const JWT_SECRET = process.env.JWT_SECRET!;
     if (!JWT_SECRET) throw new Error("Missing JWT_SECRET");
 
-    const { name, password } = await req.json();
-    if (!name || !password) {
+    const { identifier, password } = await req.json();
+    if (!identifier || !password) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
 
-    // 🔍 Debug: log username
-    console.log("LOGIN attempt for:", name);
+    // 🔍 Debug: log login attempt
+    console.log("LOGIN attempt for:", identifier);
 
     const { data: user, error } = await backendSupabase
       .from("user_list")
-      .select("id, name, password, roles_id")
-      .ilike("name", name)
+      .select("id, name, email, nim, password, roles_id, program_studi")
+      .or(`name.eq.${identifier},email.eq.${identifier},nim.eq.${identifier}`)
       .maybeSingle();
 
     console.log("SUPABASE RESPONSE:", user, error);
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     const token = jwt.sign(
-      { id: user.id, name: user.name, roles_id: user.roles_id },
+      { id: user.id, name: user.name, email: user.email, nim: user.nim, roles_id: user.roles_id },
       JWT_SECRET,
       { expiresIn: "2h" }
     );
@@ -47,7 +47,14 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Login success",
       token,
-      user: { id: user.id, name: user.name, roles_id: user.roles_id },
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        nim: user.nim, 
+        program_studi: user.program_studi,
+        roles_id: user.roles_id 
+      },
     });
   } catch (err: any) {
     console.error("Login error:", err);
