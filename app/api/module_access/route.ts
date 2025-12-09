@@ -19,7 +19,7 @@ export async function GET(req: Request) {
         can_edit,
         can_delete,
         roles_table (id_roles, name_roles),
-        modules (id, module_name)
+        module (id, module_name)
       `,
       )
       .order("id", { ascending: true });
