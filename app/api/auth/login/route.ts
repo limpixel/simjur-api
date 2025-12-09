@@ -10,7 +10,10 @@ export async function POST(req: Request) {
 
     const { identifier, password } = await req.json();
     if (!identifier || !password) {
-      return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing credentials" },
+        { status: 400 },
+      );
     }
 
     // 🔍 Debug: log login attempt
@@ -26,7 +29,10 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("Supabase query error:", error);
-      return NextResponse.json({ error: "Database query error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Database query error" },
+        { status: 500 },
+      );
     }
 
     if (!user) {
@@ -39,21 +45,27 @@ export async function POST(req: Request) {
     }
 
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, nim: user.nim, roles_id: user.roles_id },
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        nim: user.nim,
+        roles_id: user.roles_id,
+      },
       JWT_SECRET,
-      { expiresIn: "2h" }
+      { expiresIn: "2h" },
     );
 
     return NextResponse.json({
       message: "Login success",
       token,
-      user: { 
-        id: user.id, 
-        name: user.name, 
-        email: user.email, 
-        nim: user.nim, 
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        nim: user.nim,
         program_studi: user.program_studi,
-        roles_id: user.roles_id 
+        roles_id: user.roles_id,
       },
     });
   } catch (err: any) {

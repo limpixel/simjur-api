@@ -8,8 +8,9 @@ export async function GET(req: Request) {
     verifyTokenFromRequest(req);
 
     const { data, error } = await backendSupabase
-      .from("access_modules")
-      .select(`
+      .from("access_module")
+      .select(
+        `
         id,
         role_id,
         module_id,
@@ -19,7 +20,8 @@ export async function GET(req: Request) {
         can_delete,
         roles_table (id_roles, name_roles),
         modules (id, module_name)
-      `)
+      `,
+      )
       .order("id", { ascending: true });
 
     if (error) throw error;
@@ -31,7 +33,7 @@ export async function GET(req: Request) {
         error: err.message,
         timestamp: new Date().toString(),
       },
-      { status: err.status || 500 }
+      { status: err.status || 500 },
     );
   }
 }
@@ -53,12 +55,12 @@ export async function POST(req: Request) {
     if (!role_id || !module_id) {
       return NextResponse.json(
         { error: "role_id and module_id are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { data, error } = await backendSupabase
-      .from("access_modules")
+      .from("access_module")
       .insert([
         {
           role_id,
@@ -88,19 +90,10 @@ export async function PATCH(req: Request) {
   try {
     verifyTokenFromRequest(req);
 
-    const {
-      id,
-      can_view,
-      can_create,
-      can_edit,
-      can_delete
-    } = await req.json();
+    const { id, can_view, can_create, can_edit, can_delete } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "id is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const updateData: any = {};
@@ -110,7 +103,7 @@ export async function PATCH(req: Request) {
     if (can_delete !== undefined) updateData.can_delete = can_delete;
 
     const { data, error } = await backendSupabase
-      .from("access_modules")
+      .from("access_module")
       .update(updateData)
       .eq("id", id)
       .select()
@@ -135,14 +128,11 @@ export async function DELETE(req: Request) {
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "id is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const { error } = await backendSupabase
-      .from("access_modules")
+      .from("access_module")
       .delete()
       .eq("id", id);
 
