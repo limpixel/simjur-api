@@ -14,9 +14,9 @@
 
 <div align="center">
 
-| ![Avatar 1](public/readme/sigma-1.jpeg) | ![Avatar 2](public/readme/sigma-2.jpeg) | ![Avatar 3](public/readme/sigma-3.jpeg) | ![Avatar 4](public/readme/sigma-4.jpeg) | ![Avatar 5](https://i.pinimg.com/1200x/eb/ee/f6/ebeef61d5884dba8c382eca6b9de87ca.jpg) |
+| ![Avatar 1](public/readme/sigma-1.jpeg) | ![Avatar 2](public/readme/sigma-2.jpeg) | ![Avatar 3](public/readme/sigma-3.jpeg) | ![Avatar 4](public/readme/sigma-4.jpeg) | |
 |:----:|:----:|:----:|:----:|:----:|
-| Abdul Halim<br/>Backend Developer | Anugerah Rachmat Indriansyah<br/> Frontend Developer | M. Rangga Fabiano M <br/>Backend Developer | Nail Rizq Widiyanto<br/> Frontend Developer | Gedebong Pisang <br/> Analyst System |
+| Abdul Halim<br/>Backend Developer | Anugerah Rachmat Indriansyah<br/> Frontend Developer | M. Rangga Fabiano M <br/>Backend Developer | Nail Rizq Widiyanto<br/> Frontend Developer | 
 
 </div>
 
