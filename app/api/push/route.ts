@@ -15,15 +15,24 @@ function getPushServer() {
   });
 }
 
+// Add CORS headers to responses
+function addCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { subscription, title, message, url, icon } = await request.json();
 
     if (!subscription || !title || !message) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Missing required fields: subscription, title, message' },
         { status: 400 }
       );
+      return addCorsHeaders(response);
     }
 
     const pushServer = getPushServer();
@@ -34,27 +43,44 @@ export async function POST(request: NextRequest) {
       icon: icon || '/vercel.svg'
     });
 
-    return NextResponse.json({ success: true, result });
+    const response = NextResponse.json({ success: true, result });
+    return addCorsHeaders(response);
   } catch (error) {
     console.error('Push notification error:', error);
     
     if (error instanceof Error && error.message.includes('VAPID keys are not configured')) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Server configuration error: VAPID keys not set' },
         { status: 500 }
       );
+      return addCorsHeaders(response);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to send push notification' },
+    const response = NextResponse.json(
+      { error: 'Failed to send push notification', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+    return addCorsHeaders(response);
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ 
+  const response = NextResponse.json({ 
     message: 'Push notification API endpoint',
-    usage: 'POST with subscription, title, message, and optional url, icon'
+    usage: 'POST with subscription, title, message, and optional url, icon',
+    endpoints: {
+      send: 'POST /api/push',
+      auth: {
+        send: 'POST /api/auth/push',
+        subscribe: 'POST /api/auth/push/subscribe',
+        getSubscriptions: 'GET /api/auth/push/subscribe'
+      }
+    }
   });
+  return addCorsHeaders(response);
+}
+
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 });
+  return addCorsHeaders(response);
 }
