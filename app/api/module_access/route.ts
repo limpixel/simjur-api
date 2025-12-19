@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
 import { verifyTokenFromRequest } from "@/app/lib/auth";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // ganti domain frontend saat production
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  // ⛔ WAJIB untuk CORS preflight
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 // GET → ambil semua akses module beserta nama role & nama module
 export async function GET(req: Request) {
   try {

@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // ganti domain frontend saat production
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  // ⛔ WAJIB untuk CORS preflight
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 // GET → ambil semua module
 export async function GET() {
   try {
@@ -24,7 +35,10 @@ export async function POST(req: Request) {
     const { module_name, description } = await req.json();
 
     if (!module_name) {
-      return NextResponse.json({ error: "Module name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Module name is required" },
+        { status: 400 },
+      );
     }
 
     const { data, error } = await backendSupabase
@@ -35,7 +49,10 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ message: "Module added successfully", module: data });
+    return NextResponse.json({
+      message: "Module added successfully",
+      module: data,
+    });
   } catch (err: any) {
     console.error("Error adding module:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -48,7 +65,10 @@ export async function DELETE(req: Request) {
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json({ error: "Module ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Module ID is required" },
+        { status: 400 },
+      );
     }
 
     const { error } = await backendSupabase
