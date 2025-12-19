@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
@@ -17,7 +17,7 @@ export default function Home() {
     } catch (error) {
       setConnectionTest({
         error: "Connection test failed",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     } finally {
       setTesting(false);
@@ -25,153 +25,134 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Test connection on page load
     testConnection();
   }, []);
 
   return (
-    <div className="font-sans min-h-screen bg-gray-50 p-8">
-      <main className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-6 py-10">
+      <main className="max-w-5xl mx-auto space-y-10">
+        {/* HEADER */}
+        <header className="text-center space-y-4">
           <Image
-            className="dark:invert mx-auto"
+            className="mx-auto dark:invert"
             src="/next.svg"
             alt="Next.js logo"
-            width={180}
-            height={38}
+            width={160}
+            height={34}
             priority
           />
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Push Notification Demo
           </h1>
-          <p className="text-lg text-gray-600">
-            Complete implementation with CORS support and backend integration
+          <p className="text-slate-600 dark:text-slate-300">
+            Modern Web Push implementation with Next.js & Web Push
           </p>
-        </div>
+        </header>
 
-        {/* Connection Status */}
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">API Connection Status</h2>
-          
+        {/* API STATUS */}
+        <section className="rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-white">
+            API Connection Status
+          </h2>
+
           {testing ? (
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              <span className="text-gray-600">Testing connection...</span>
+            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+              <span className="h-4 w-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+              Testing connection...
             </div>
-          ) : connectionTest ? (
-            <div className="space-y-2">
-              <div className={`p-3 rounded ${
-                connectionTest.error 
-                  ? 'bg-red-100 text-red-800' 
-                  : 'bg-green-100 text-green-800'
-              }`}>
+          ) : (
+            connectionTest && (
+              <div
+                className={`rounded-lg p-4 text-sm ${
+                  connectionTest.error
+                    ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                }`}
+              >
                 {connectionTest.error ? (
-                  <div>
-                    <strong>❌ Connection Failed</strong>
-                    <p className="text-sm mt-1">{connectionTest.error}</p>
-                    <p className="text-xs mt-1">{connectionTest.details}</p>
-                  </div>
+                  <>
+                    <p className="font-semibold">❌ Connection Failed</p>
+                    <p className="mt-1 text-xs opacity-80">
+                      {connectionTest.details}
+                    </p>
+                  </>
                 ) : (
-                  <div>
-                    <strong>✅ Connected Successfully</strong>
-                    <p className="text-sm mt-1">CORS is working properly</p>
-                  </div>
+                  <p className="font-semibold">
+                    ✅ Connected successfully — CORS OK
+                  </p>
                 )}
               </div>
-              <button
-                onClick={testConnection}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                Retest Connection
-              </button>
-            </div>
-          ) : null}
-        </div>
+            )
+          )}
 
-        {/* Push Notification Component */}
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Push Notifications</h2>
+          <button
+            onClick={testConnection}
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+          >
+            Retest Connection
+          </button>
+        </section>
+
+        {/* PUSH TOGGLE */}
+        <section className="rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4">
+            Push Notifications
+          </h2>
           <PushNotificationToggle />
-        </div>
+        </section>
 
-        {/* API Information */}
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">API Endpoints</h2>
-          <div className="space-y-3">
-            <div className="p-3 bg-gray-50 rounded">
-              <strong>Public Push:</strong>
-              <code className="block text-sm mt-1">POST /api/push</code>
-              <p className="text-sm text-gray-600 mt-1">Send push notifications without authentication</p>
+        {/* API INFO */}
+        <section className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "Public Push",
+              endpoint: "POST /api/push",
+              desc: "Send push notification without authentication",
+            },
+            {
+              title: "Authenticated Push",
+              endpoint: "POST /api/auth/push",
+              desc: "Requires JWT authentication",
+            },
+            {
+              title: "Subscription API",
+              endpoint: "POST /GET /DELETE /api/auth/push/subscribe",
+              desc: "Manage user subscriptions",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-sm p-5"
+            >
+              <h3 className="font-semibold text-slate-800 dark:text-white">
+                {item.title}
+              </h3>
+              <code className="block mt-2 text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded">
+                {item.endpoint}
+              </code>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                {item.desc}
+              </p>
             </div>
-            
-            <div className="p-3 bg-gray-50 rounded">
-              <strong>Authenticated Push:</strong>
-              <code className="block text-sm mt-1">POST /api/auth/push</code>
-              <p className="text-sm text-gray-600 mt-1">Send push notifications with authentication</p>
-            </div>
-            
-            <div className="p-3 bg-gray-50 rounded">
-              <strong>Subscribe Management:</strong>
-              <code className="block text-sm mt-1">POST/GET/DELETE /api/auth/push/subscribe</code>
-              <p className="text-sm text-gray-600 mt-1">Manage user subscriptions (requires auth)</p>
-            </div>
-          </div>
-        </div>
+          ))}
+        </section>
 
-        {/* Testing Instructions */}
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4">Testing Instructions</h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="font-semibold text-gray-700">1. Browser Console Testing:</h3>
-              <pre className="bg-gray-100 p-2 rounded mt-2 overflow-x-auto">
-{`// Get subscription object
-navigator.serviceWorker.ready.then(registration => {
-  return registration.pushManager.getSubscription();
-}).then(subscription => {
-  console.log('Subscription:', JSON.stringify(subscription, null, 2));
-  copy(JSON.stringify(subscription));
-});`}
-              </pre>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-700">2. Postman Testing:</h3>
-              <pre className="bg-gray-100 p-2 rounded mt-2 overflow-x-auto">
-{`POST https://simjur-api.vercel.app/api/push
-Headers: Content-Type: application/json
-Body: {
-  "subscription": { ... },
-  "title": "Test Notification",
-  "message": "Hello from Postman!",
-  "url": "/",
-  "icon": "/vercel.svg"
-}`}
-              </pre>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-700">3. Authenticated Testing:</h3>
-              <p className="text-gray-600">Add Authorization header: Bearer YOUR_JWT_TOKEN</p>
-            </div>
-          </div>
-        </div>
-
-        {/* CORS Status */}
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">✅ CORS Configuration</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Access-Control-Allow-Origin: * (configured for development)</li>
-            <li>• Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS</li>
-            <li>• Access-Control-Allow-Headers: Content-Type, Authorization</li>
-            <li>• OPTIONS preflight requests handled automatically</li>
+        {/* CORS INFO */}
+        <section className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-5">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
+            ✅ CORS Configuration
+          </h3>
+          <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+            <li>• Access-Control-Allow-Origin: *</li>
+            <li>• Methods: GET, POST, PUT, DELETE, OPTIONS</li>
+            <li>• Headers: Content-Type, Authorization</li>
+            <li>• Preflight handled correctly</li>
           </ul>
-        </div>
+        </section>
 
-        {/* Footer */}
-        <footer className="text-center text-sm text-gray-500 pt-8 border-t">
-          <p>Push Notification Demo - Built with Next.js, TypeScript, and next-push</p>
+        {/* FOOTER */}
+        <footer className="text-center text-sm text-slate-500 dark:text-slate-400 pt-6 border-t dark:border-slate-700">
+          Push Notification Demo · Next.js · Web Push · Vercel
         </footer>
       </main>
     </div>
