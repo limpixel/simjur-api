@@ -4,6 +4,12 @@ import Image from "next/image";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { apiClient } from "@/lib/apiClient";
 import { useEffect, useState } from "react";
+import { 
+  TestBasicNotification, 
+  TestCustomNotification, 
+  TestErrorSimulation, 
+  TestConnectionStatus 
+} from "@/components/PushTestComponents";
 
 export default function Home() {
   const [connectionTest, setConnectionTest] = useState<any>(null);
@@ -99,6 +105,71 @@ export default function Home() {
             Push Notifications
           </h2>
           <PushNotificationToggle />
+        </section>
+
+        {/* PUSH NOTIFICATION TESTING */}
+        <section className="rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-6">
+            🧪 Push Notification Testing
+          </h2>
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Basic Test */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-700 dark:text-slate-300">
+                Basic Notification Test
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Send a test notification to your current subscription.
+              </p>
+              <TestBasicNotification />
+            </div>
+
+            {/* Custom Test */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-700 dark:text-slate-300">
+                Custom Message Test
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Send a notification with custom title and message.
+              </p>
+              <TestCustomNotification />
+            </div>
+
+            {/* Error Test */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-700 dark:text-slate-300">
+                Error Handling Test
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Test how the API handles invalid requests gracefully.
+              </p>
+              <TestErrorSimulation />
+            </div>
+
+            {/* Connection Test */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-700 dark:text-slate-300">
+                API Connection Test
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Verify the API server is accessible and CORS is working.
+              </p>
+              <TestConnectionStatus />
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
+              💡 Testing Tips
+            </h4>
+            <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+              <li>• Make sure you're subscribed to push notifications first</li>
+              <li>• Keep this tab open to see toast notifications</li>
+              <li>• Check browser notifications for actual push messages</li>
+              <li>• Toast notifications show API request status</li>
+            </ul>
+          </div>
         </section>
 
         {/* API INFO */}
