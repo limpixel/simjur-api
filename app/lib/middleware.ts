@@ -9,7 +9,7 @@ const PUBLIC_PATHS = [
 
 // CORS configuration
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // In production, specify your domains
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400',
@@ -26,60 +26,65 @@ function addCorsHeaders(response: NextResponse) {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // Handle OPTIONS preflight requests
+  // Handle OPTIONS preflight requests for ALL API routes
   if (req.method === 'OPTIONS') {
     const response = new NextResponse(null, { status: 200 });
     return addCorsHeaders(response);
   }
 
-  // Allow public paths without authentication
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+  // Add CORS headers to ALL API responses
+  if (pathname.startsWith('/api/')) {
+    // Create base response with CORS headers
     const response = NextResponse.next();
-    return addCorsHeaders(response);
-  }
+    addCorsHeaders(response);
 
-  // For API push routes that need special CORS handling
-  if (pathname.includes('/api/push') || pathname.includes('/api/auth/push')) {
-    const authHeader = req.headers.get('authorization');
-    
-    // Allow OPTIONS and GET requests to push endpoints without auth for CORS
-    if (req.method === 'GET' || !authHeader) {
-      const response = NextResponse.next();
-      return addCorsHeaders(response);
+    // Handle authentication for protected routes
+    if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+      return response;
     }
-  }
 
-  // Default authentication check for other protected routes
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader && !pathname.includes('/api/push')) {
-    const response = new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return addCorsHeaders(response);
-  }
-
-  // Verify JWT token if auth header exists
-  if (authHeader) {
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-    try {
-      const JWT_SECRET = process.env.JWT_SECRET;
-      if (!JWT_SECRET) {
-        throw new Error('JWT_SECRET not configured');
+    // For API push routes that need special CORS handling
+    if (pathname.includes('/api/push') || pathname.includes('/api/auth/push')) {
+      const authHeader = req.headers.get('authorization');
+      
+      // Allow GET requests to push endpoints without auth for CORS
+      if (req.method === 'GET' || !authHeader) {
+        return response;
       }
-      jwt.verify(token, JWT_SECRET);
-      const response = NextResponse.next();
-      return addCorsHeaders(response);
-    } catch (error) {
-      const response = new NextResponse(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-      return addCorsHeaders(response);
     }
+
+    // Default authentication check for other protected routes
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader && !pathname.includes('/api/push')) {
+      const errorResponse = new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+      return errorResponse;
+    }
+
+    // Verify JWT token if auth header exists
+    if (authHeader) {
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+      try {
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET) {
+          throw new Error('JWT_SECRET not configured');
+        }
+        jwt.verify(token, JWT_SECRET);
+        return response;
+      } catch (error) {
+        const errorResponse = new NextResponse(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+        return errorResponse;
+      }
+    }
+
+    return response;
   }
 
-  // Default response
-  const response = NextResponse.next();
-  return addCorsHeaders(response);
+  // Non-API routes
+  return NextResponse.next();
 }
