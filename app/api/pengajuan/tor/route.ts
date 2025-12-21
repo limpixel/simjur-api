@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
 import { verifyTokenFromRequest } from "@/app/lib/auth";
+import { headers } from "next/headers";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*", // ganti domain frontend saat production
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ tor_list: data });
+    return NextResponse.json({ tor_list: data, headers: corsHeaders });
   } catch (err: any) {
     console.error("Error fetching TOR list:", err);
     const statusCode = err.status || 500;
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { message: "TOR submitted successfully", tor: data },
-      { status: 201 },
+      { status: 201, headers: corsHeaders },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -233,7 +234,10 @@ export async function PUT(req: Request) {
         code: errorCode,
         timeStamp: new Date().toString(),
       },
-      { status: statusCode },
+      {
+        status: statusCode,
+        headers: corsHeaders,
+      },
     );
   }
 }
