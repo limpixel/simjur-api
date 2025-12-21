@@ -1,17 +1,46 @@
-import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
+import { NextResponse } from "next/server";
 import { verifyTokenFromRequest } from "@/app/lib/auth";
 import bcrypt from "bcryptjs";
 
-// GET → ambil user berdasarkan ID
-export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+/* =========================
+   CORS HELPER
+========================= */
+function withCors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, PUT, PATCH, DELETE, OPTIONS",
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
+  return response;
+}
+
+/* =========================
+   OPTIONS (PRE-FLIGHT)
+========================= */
+export async function OPTIONS() {
+  return withCors(new NextResponse(null, { status: 200 }));
+}
+
+/* =========================
+   GET USER BY ID
+========================= */
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = await context.params;
+    const { id } = params;
 
     const { data, error } = await backendSupabase
       .from("user_list")
-      .select(`
+      .select(
+        `
         id,
         name,
         email,
@@ -24,69 +53,89 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
           name_roles,
           keterangan
         )
-      `)
+      `,
+      )
       .eq("id", id)
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ user: data });
-  } catch (err: any) {
-    console.error("Error fetching user:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || 'INTERNAL_ERROR';
-    return NextResponse.json({ 
-      error: err.message,
-      code: errorCode,
-      timeStamp: new Date().toString()
-    }, { status: statusCode });
-  }
-}
-
-// PUT → update user berdasarkan ID (replace all fields)
-export async function PUT(req: Request, context: { params: Promise<{ id: string }> }) {
-  try {
-    verifyTokenFromRequest(req);
-    const { id } = await context.params;
-    const { name, email, nim, program_studi, description, roles_id, password } = await req.json();
-
-    if (!name || !email || !nim || !program_studi || !roles_id) {
-      return NextResponse.json(
-        { error: "Name, email, nim, program_studi, and roles_id are required" },
-        { status: 400 }
+      return withCors(
+        NextResponse.json({ error: "User not found" }, { status: 404 }),
       );
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    return withCors(NextResponse.json({ user: data }));
+  } catch (err: any) {
+    console.error("GET user error:", err);
+    return withCors(
+      NextResponse.json(
+        {
+          error: err.message || "Internal server error",
+          code: err.code || "INTERNAL_ERROR",
+          timeStamp: new Date().toString(),
+        },
+        { status: err.status || 500 },
+      ),
+    );
+  }
+}
+
+/* =========================
+   PUT (FULL UPDATE)
+========================= */
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    verifyTokenFromRequest(req);
+    const { id } = params;
+
+    const { name, email, nim, program_studi, description, roles_id, password } =
+      await req.json();
+
+    if (!name || !email || !nim || !program_studi || !roles_id) {
+      return withCors(
+        NextResponse.json(
+          {
+            error: "name, email, nim, program_studi, and roles_id are required",
+          },
+          { status: 400 },
+        ),
+      );
     }
 
-    // Check for existing email (excluding current user)
-    const { data: existingEmail } = await backendSupabase
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return withCors(
+        NextResponse.json({ error: "Invalid email format" }, { status: 400 }),
+      );
+    }
+
+    const { data: emailExists } = await backendSupabase
       .from("user_list")
-      .select("email")
+      .select("id")
       .eq("email", email)
       .neq("id", id)
       .maybeSingle();
 
-    if (existingEmail) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+    if (emailExists) {
+      return withCors(
+        NextResponse.json({ error: "Email already exists" }, { status: 409 }),
+      );
     }
 
-    // Check for existing NIM (excluding current user)
-    const { data: existingNim } = await backendSupabase
+    const { data: nimExists } = await backendSupabase
       .from("user_list")
-      .select("nim")
+      .select("id")
       .eq("nim", nim)
       .neq("id", id)
       .maybeSingle();
 
-    if (existingNim) {
-      return NextResponse.json({ error: "NIM already exists" }, { status: 409 });
+    if (nimExists) {
+      return withCors(
+        NextResponse.json({ error: "NIM already exists" }, { status: 409 }),
+      );
     }
 
     const updateData: any = {
@@ -94,12 +143,11 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
       email,
       nim,
       program_studi,
-      description: description || null,
       roles_id,
-      updated_at: new Date()
+      description: description ?? null,
+      updated_at: new Date(),
     };
 
-    // Hash password if provided
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
@@ -108,7 +156,8 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
       .from("user_list")
       .update(updateData)
       .eq("id", id)
-      .select(`
+      .select(
+        `
         id,
         name,
         email,
@@ -121,104 +170,117 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
           name_roles,
           keterangan
         )
-      `)
+      `,
+      )
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ 
-      message: "User updated successfully", 
-      user: data 
-    });
+    return withCors(
+      NextResponse.json({
+        message: "User updated successfully",
+        user: data,
+      }),
+    );
   } catch (err: any) {
-    console.error("Error updating user:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || 'INTERNAL_ERROR';
-    return NextResponse.json({ 
-      error: err.message,
-      code: errorCode,
-      timeStamp: new Date().toString()
-    }, { status: statusCode });
+    console.error("PUT user error:", err);
+    return withCors(
+      NextResponse.json(
+        {
+          error: err.message || "Internal server error",
+          code: err.code || "INTERNAL_ERROR",
+          timeStamp: new Date().toString(),
+        },
+        { status: err.status || 500 },
+      ),
+    );
   }
 }
 
-// PATCH → update user berdasarkan ID (partial update)
-export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
+/* =========================
+   PATCH (PARTIAL UPDATE)
+========================= */
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = await context.params;
-    const { name, email, nim, program_studi, description, roles_id, password } = await req.json();
+    const { id } = params;
+
+    const { name, email, nim, program_studi, description, roles_id, password } =
+      await req.json();
 
     const updateData: any = {};
-    
+
     if (name) updateData.name = name;
-    
+
     if (email) {
-      // Email format validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+        return withCors(
+          NextResponse.json({ error: "Invalid email format" }, { status: 400 }),
+        );
       }
-      
-      // Check for existing email (excluding current user)
-      const { data: existingEmail } = await backendSupabase
+
+      const { data: emailExists } = await backendSupabase
         .from("user_list")
-        .select("email")
+        .select("id")
         .eq("email", email)
         .neq("id", id)
         .maybeSingle();
 
-      if (existingEmail) {
-        return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+      if (emailExists) {
+        return withCors(
+          NextResponse.json({ error: "Email already exists" }, { status: 409 }),
+        );
       }
-      
+
       updateData.email = email;
     }
-    
+
     if (nim) {
-      // Check for existing NIM (excluding current user)
-      const { data: existingNim } = await backendSupabase
+      const { data: nimExists } = await backendSupabase
         .from("user_list")
-        .select("nim")
+        .select("id")
         .eq("nim", nim)
         .neq("id", id)
         .maybeSingle();
 
-      if (existingNim) {
-        return NextResponse.json({ error: "NIM already exists" }, { status: 409 });
+      if (nimExists) {
+        return withCors(
+          NextResponse.json({ error: "NIM already exists" }, { status: 409 }),
+        );
       }
-      
+
       updateData.nim = nim;
     }
-    
+
     if (program_studi) updateData.program_studi = program_studi;
-    if (description !== undefined) updateData.description = description;
     if (roles_id) updateData.roles_id = roles_id;
-    
-    // Hash password if provided
+    if (description !== undefined) updateData.description = description;
+
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
-    
-    updateData.updated_at = new Date();
 
-    if (Object.keys(updateData).length === 1) { // hanya updated_at
-      return NextResponse.json(
-        { error: "At least one field to update is required" },
-        { status: 400 }
+    if (Object.keys(updateData).length === 0) {
+      return withCors(
+        NextResponse.json(
+          { error: "At least one field to update is required" },
+          { status: 400 },
+        ),
       );
     }
+
+    updateData.updated_at = new Date();
 
     const { data, error } = await backendSupabase
       .from("user_list")
       .update(updateData)
       .eq("id", id)
-      .select(`
+      .select(
+        `
         id,
         name,
         email,
@@ -231,59 +293,65 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
           name_roles,
           keterangan
         )
-      `)
+      `,
+      )
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ 
-      message: "User updated successfully", 
-      user: data 
-    });
+    return withCors(
+      NextResponse.json({
+        message: "User updated successfully",
+        user: data,
+      }),
+    );
   } catch (err: any) {
-    console.error("Error updating user:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || 'INTERNAL_ERROR';
-    return NextResponse.json({ 
-      error: err.message,
-      code: errorCode,
-      timeStamp: new Date().toString()
-    }, { status: statusCode });
+    console.error("PATCH user error:", err);
+    return withCors(
+      NextResponse.json(
+        {
+          error: err.message || "Internal server error",
+          code: err.code || "INTERNAL_ERROR",
+          timeStamp: new Date().toString(),
+        },
+        { status: err.status || 500 },
+      ),
+    );
   }
 }
 
-// DELETE → hapus user berdasarkan ID
-export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
+/* =========================
+   DELETE USER
+========================= */
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = await context.params;
+    const { id } = params;
 
     const { error } = await backendSupabase
       .from("user_list")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ message: "User deleted successfully" });
+    return withCors(
+      NextResponse.json({ message: "User deleted successfully" }),
+    );
   } catch (err: any) {
-    console.error("Error deleting user:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || 'INTERNAL_ERROR';
-    return NextResponse.json({ 
-      error: err.message,
-      code: errorCode,
-      timeStamp: new Date().toString()
-    }, { status: statusCode });
+    console.error("DELETE user error:", err);
+    return withCors(
+      NextResponse.json(
+        {
+          error: err.message || "Internal server error",
+          code: err.code || "INTERNAL_ERROR",
+          timeStamp: new Date().toString(),
+        },
+        { status: err.status || 500 },
+      ),
+    );
   }
 }
