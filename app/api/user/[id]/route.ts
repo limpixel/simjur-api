@@ -31,11 +31,11 @@ export async function OPTIONS() {
 ========================= */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = params;
+    const { id } = await context.params;
 
     const { data, error } = await backendSupabase
       .from("user_list")
@@ -85,11 +85,11 @@ export async function GET(
 ========================= */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = params;
+    const { id } = await context.params;
 
     const { name, email, nim, program_studi, description, roles_id, password } =
       await req.json();
@@ -202,11 +202,11 @@ export async function PUT(
 ========================= */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = params;
+    const { id } = await context.params;
 
     const { name, email, nim, program_studi, description, roles_id, password } =
       await req.json();
@@ -325,11 +325,11 @@ export async function PATCH(
 ========================= */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     verifyTokenFromRequest(req);
-    const { id } = params;
+    const { id } = await context.params;
 
     const { error } = await backendSupabase
       .from("user_list")
