@@ -1,19 +1,35 @@
 import { NextResponse } from "next/server";
 import { backendSupabase } from "@/app/lib/supabaseClient";
 import { verifyTokenFromRequest } from "@/app/lib/auth";
-import { headers } from "next/headers";
 
+/* =========================
+   CORS CONFIG
+========================= */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*", // ganti domain frontend saat production
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+/* =========================
+   HELPER RESPONSE
+========================= */
+const withCors = (body: any, status = 200) =>
+  NextResponse.json(body, {
+    status,
+    headers: corsHeaders,
+  });
+
+/* =========================
+   OPTIONS (PRE-FLIGHT)
+========================= */
 export async function OPTIONS() {
-  // ⛔ WAJIB untuk CORS preflight
-  return NextResponse.json({}, { headers: corsHeaders });
+  return withCors({});
 }
 
+/* =========================
+   GET TOR LIST
+========================= */
 export async function GET(req: Request) {
   try {
     verifyTokenFromRequest(req);
@@ -34,27 +50,29 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ tor_list: data, headers: corsHeaders });
+    return withCors({ tor_list: data });
   } catch (err: any) {
-    console.error("Error fetching TOR list:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
-    return NextResponse.json(
+    console.error("GET TOR ERROR:", err);
+
+    return withCors(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      err.status || 500,
     );
   }
 }
 
+/* =========================
+   POST TOR
+========================= */
 export async function POST(req: Request) {
   try {
     const user = verifyTokenFromRequest(req);
-
     const body = await req.json();
+
     const {
       nomor_surat,
       nama_kegiatan,
@@ -84,10 +102,7 @@ export async function POST(req: Request) {
       !pic ||
       !upload_file
     ) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
+      return withCors({ error: "All fields are required" }, 400);
     }
 
     const { data, error } = await backendSupabase
@@ -107,7 +122,7 @@ export async function POST(req: Request) {
           pic,
           upload_file,
 
-          // 🔥 FIX FK
+          // FK FIX
           pengaju_id: user.id,
           user_id: user.id,
         },
@@ -117,26 +132,34 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json(
-      { message: "TOR submitted successfully", tor: data },
-      { status: 201, headers: corsHeaders },
+    return withCors(
+      {
+        message: "TOR submitted successfully",
+        tor: data,
+      },
+      201,
     );
   } catch (err: any) {
-    return NextResponse.json(
+    console.error("POST TOR ERROR:", err);
+
+    return withCors(
       {
         error: err.message,
         code: err.code || "INTERNAL_ERROR",
       },
-      { status: 500 },
+      500,
     );
   }
 }
 
+/* =========================
+   PUT TOR
+========================= */
 export async function PUT(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const body = await req.json();
+
     const {
       id,
       nomor_surat,
@@ -155,14 +178,8 @@ export async function PUT(req: Request) {
       user_id,
     } = body;
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "TOR ID is required" },
-        { status: 400 },
-      );
-    }
+    if (!id) return withCors({ error: "TOR ID is required" }, 400);
 
-    // Validasi required fields
     if (
       !nomor_surat ||
       !nama_kegiatan ||
@@ -179,10 +196,7 @@ export async function PUT(req: Request) {
       !pengaju_id ||
       !user_id
     ) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
+      return withCors({ error: "All fields are required" }, 400);
     }
 
     const { data, error } = await backendSupabase
@@ -207,78 +221,52 @@ export async function PUT(req: Request) {
       .select()
       .single();
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "TOR not found" }, { status: 404 });
-      }
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "Pengaju already has a TOR submission" },
-          { status: 409 },
-        );
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({
+    return withCors({
       message: "TOR updated successfully",
       tor: data,
     });
   } catch (err: any) {
-    console.error("Error updating TOR:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
-    return NextResponse.json(
+    console.error("PUT TOR ERROR:", err);
+
+    return withCors(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
       },
-      {
-        status: statusCode,
-        headers: corsHeaders,
-      },
+      err.status || 500,
     );
   }
 }
 
+/* =========================
+   DELETE TOR
+========================= */
 export async function DELETE(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const { id } = await req.json();
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "TOR ID is required" },
-        { status: 400 },
-      );
-    }
+    if (!id) return withCors({ error: "TOR ID is required" }, 400);
 
     const { error } = await backendSupabase
       .from("tor_database_tables")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "TOR not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ message: "TOR deleted successfully" });
+    return withCors({ message: "TOR deleted successfully" });
   } catch (err: any) {
-    console.error("Error deleting TOR:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
-    return NextResponse.json(
+    console.error("DELETE TOR ERROR:", err);
+
+    return withCors(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
       },
-      { status: statusCode },
+      err.status || 500,
     );
   }
 }
