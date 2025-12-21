@@ -8,8 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+const isEmpty = (v: any) => v === undefined || v === null || v === "";
+
 export async function OPTIONS() {
-  // ⛔ WAJIB untuk CORS preflight
   return NextResponse.json({}, { headers: corsHeaders });
 }
 
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
       .select(
         `
         *,
-        admin_list (
+        admin_list:admin_id (
           id,
           admin_name,
           email
@@ -33,18 +34,15 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ lpj_list: data });
+    return NextResponse.json({ lpj_list: data }, { headers: corsHeaders });
   } catch (err: any) {
-    console.error("Error fetching LPJ list:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
@@ -52,81 +50,52 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const body = await req.json();
-    const {
-      nomor_surat,
-      nama_kegiatan,
-      tujuan,
-      latar_belakang,
-      peserta,
-      jadwal_awal,
-      jadwal_akhir,
-      anggaran,
-      pic,
-      upload_file,
-      estimasi_jadwal,
-      status,
-      catatan_pengajuan,
-      admin_id,
-      admin_name,
-    } = body;
 
-    // Validasi required fields
-    if (
-      !nomor_surat ||
-      !nama_kegiatan ||
-      !tujuan ||
-      !latar_belakang ||
-      !peserta ||
-      !jadwal_awal ||
-      !jadwal_akhir ||
-      !anggaran ||
-      !pic ||
-      !upload_file ||
-      !estimasi_jadwal ||
-      !admin_id ||
-      !admin_name
-    ) {
-      return NextResponse.json(
-        { error: "All required fields must be filled" },
-        { status: 400 },
-      );
+    const requiredFields = [
+      "nama_kegiatan",
+      "tujuan",
+      "latar_belakang",
+      "peserta_mahasiswa",
+      "jadwal_awal",
+      "jadwal_akhir",
+      "estimasi_jadwal",
+      "dana_diajukan",
+      "pic",
+      "upload_file",
+      "admin_id",
+      "admin_name",
+    ];
+
+    for (const field of requiredFields) {
+      if (isEmpty(body[field])) {
+        return NextResponse.json(
+          { error: `${field} is required` },
+          { status: 400, headers: corsHeaders },
+        );
+      }
     }
-
-    // Set default status jika tidak ada
-    const finalStatus = status || "pending";
 
     const { data, error } = await backendSupabase
       .from("lpj_database_tables")
       .insert([
         {
-          nomor_surat,
-          nama_kegiatan,
-          tujuan,
-          latar_belakang,
-          peserta,
-          jadwal_awal,
-          jadwal_akhir,
-          anggaran,
-          pic,
-          upload_file,
-          estimasi_jadwal,
-          status: finalStatus,
-          catatan_pengajuan: catatan_pengajuan || null,
-          admin_id,
-          admin_name,
+          ...body,
+          status: body.status || "pending",
+          catatan_pengajuan: body.catatan_pengajuan || null,
+          peserta_dosen: body.peserta_dosen || null,
+          peserta_alumni: body.peserta_alumni || null,
+          dana_terpakai: body.dana_terpakai || null,
         },
       ])
       .select()
       .single();
 
     if (error) {
-      // Handle foreign key violation
       if (error.code === "23503") {
         return NextResponse.json(
           { error: "Admin ID not found" },
-          { status: 400 },
+          { status: 400, headers: corsHeaders },
         );
       }
       throw error;
@@ -134,19 +103,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { message: "LPJ submitted successfully", lpj: data },
-      { status: 201 },
+      { status: 201, headers: corsHeaders },
     );
   } catch (err: any) {
-    console.error("Error creating LPJ:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
@@ -154,107 +120,38 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const body = await req.json();
-    const {
-      id,
-      nomor_surat,
-      nama_kegiatan,
-      tujuan,
-      latar_belakang,
-      peserta,
-      jadwal_awal,
-      jadwal_akhir,
-      anggaran,
-      pic,
-      upload_file,
-      estimasi_jadwal,
-      status,
-      catatan_pengajuan,
-      admin_id,
-      admin_name,
-    } = body;
 
-    if (!id) {
+    if (!body.id) {
       return NextResponse.json(
         { error: "LPJ ID is required" },
-        { status: 400 },
+        { status: 400, headers: corsHeaders },
       );
     }
 
-    // Validasi required fields
-    if (
-      !nomor_surat ||
-      !nama_kegiatan ||
-      !tujuan ||
-      !latar_belakang ||
-      !peserta ||
-      !jadwal_awal ||
-      !jadwal_akhir ||
-      !anggaran ||
-      !pic ||
-      !upload_file ||
-      !estimasi_jadwal ||
-      !admin_id ||
-      !admin_name
-    ) {
-      return NextResponse.json(
-        { error: "All required fields must be filled" },
-        { status: 400 },
-      );
-    }
+    const { id, ...payload } = body;
 
     const { data, error } = await backendSupabase
       .from("lpj_database_tables")
-      .update({
-        nomor_surat,
-        nama_kegiatan,
-        tujuan,
-        latar_belakang,
-        peserta,
-        jadwal_awal,
-        jadwal_akhir,
-        anggaran,
-        pic,
-        upload_file,
-        estimasi_jadwal,
-        status,
-        catatan_pengajuan: catatan_pengajuan || null,
-        admin_id,
-        admin_name,
-      })
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "LPJ not found" }, { status: 404 });
-      }
-      if (error.code === "23503") {
-        return NextResponse.json(
-          { error: "Admin ID not found" },
-          { status: 400 },
-        );
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({
-      message: "LPJ updated successfully",
-      lpj: data,
-    });
+    return NextResponse.json(
+      { message: "LPJ updated successfully", lpj: data },
+      { headers: corsHeaders },
+    );
   } catch (err: any) {
-    console.error("Error updating LPJ:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
@@ -262,13 +159,12 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json(
         { error: "LPJ ID is required" },
-        { status: 400 },
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -277,25 +173,20 @@ export async function DELETE(req: Request) {
       .delete()
       .eq("id", id);
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "LPJ not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ message: "LPJ deleted successfully" });
+    return NextResponse.json(
+      { message: "LPJ deleted successfully" },
+      { headers: corsHeaders },
+    );
   } catch (err: any) {
-    console.error("Error deleting LPJ:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
