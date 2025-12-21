@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       .select(
         `
         *,
-        user_list (
+        user_list:user_id (
           id,
           name,
           roles_id
@@ -33,18 +33,15 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ tor_list: data });
+    return NextResponse.json({ tor_list: data }, { headers: corsHeaders });
   } catch (err: any) {
-    console.error("Error fetching TOR list:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
@@ -150,106 +147,38 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const body = await req.json();
-    const {
-      id,
-      nomor_surat,
-      nama_kegiatan,
-      tujuan,
-      latar_belakang,
-      tanggal_pengajuan,
-      nominal_pengajuan,
-      peserta,
-      jadwal_awal,
-      jadwal_akhir,
-      anggaran,
-      pic,
-      upload_file,
-      pengaju_id,
-      user_id,
-    } = body;
 
-    if (!id) {
+    if (!body.id) {
       return NextResponse.json(
         { error: "TOR ID is required" },
-        { status: 400 },
+        { status: 400, headers: corsHeaders },
       );
     }
 
-    // Validasi required fields
-    if (
-      !nomor_surat ||
-      !nama_kegiatan ||
-      !tujuan ||
-      !latar_belakang ||
-      !tanggal_pengajuan ||
-      !nominal_pengajuan ||
-      !peserta ||
-      !jadwal_awal ||
-      !jadwal_akhir ||
-      !anggaran ||
-      !pic ||
-      !upload_file ||
-      !pengaju_id ||
-      !user_id
-    ) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
-    }
+    const { id, ...payload } = body;
 
     const { data, error } = await backendSupabase
       .from("tor_database_tables")
-      .update({
-        nomor_surat,
-        nama_kegiatan,
-        tujuan,
-        latar_belakang,
-        tanggal_pengajuan,
-        nominal_pengajuan,
-        peserta,
-        jadwal_awal,
-        jadwal_akhir,
-        anggaran,
-        pic,
-        upload_file,
-        pengaju_id,
-        user_id,
-      })
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "TOR not found" }, { status: 404 });
-      }
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "Pengaju already has a TOR submission" },
-          { status: 409 },
-        );
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({
-      message: "TOR updated successfully",
-      tor: data,
-    });
+    return NextResponse.json(
+      { message: "TOR updated successfully", tor: data },
+      { headers: corsHeaders },
+    );
   } catch (err: any) {
-    console.error("Error updating TOR:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
@@ -257,13 +186,12 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     verifyTokenFromRequest(req);
-
     const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json(
         { error: "TOR ID is required" },
-        { status: 400 },
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -272,25 +200,20 @@ export async function DELETE(req: Request) {
       .delete()
       .eq("id", id);
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "TOR not found" }, { status: 404 });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ message: "TOR deleted successfully" });
+    return NextResponse.json(
+      { message: "TOR deleted successfully" },
+      { headers: corsHeaders },
+    );
   } catch (err: any) {
-    console.error("Error deleting TOR:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
+        timeStamp: new Date().toISOString(),
       },
-      { status: statusCode },
+      { status: err.status || 500, headers: corsHeaders },
     );
   }
 }
