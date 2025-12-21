@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       .select(
         `
         *,
-        admin_list:admin_id (
+        admin_list (
           id,
           admin_name,
           email
@@ -34,15 +34,18 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ lpj_list: data }, { headers: corsHeaders });
+    return NextResponse.json({ lpj_list: data });
   } catch (err: any) {
+    console.error("Error fetching LPJ list:", err);
+    const statusCode = err.status || 500;
+    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: err.code || "INTERNAL_ERROR",
-        timeStamp: new Date().toISOString(),
+        code: errorCode,
+        timeStamp: new Date().toString(),
       },
-      { status: err.status || 500, headers: corsHeaders },
+      { status: statusCode },
     );
   }
 }
@@ -50,52 +53,81 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     verifyTokenFromRequest(req);
+
     const body = await req.json();
+    const {
+      nomor_surat,
+      nama_kegiatan,
+      tujuan,
+      latar_belakang,
+      peserta,
+      jadwal_awal,
+      jadwal_akhir,
+      anggaran,
+      pic,
+      upload_file,
+      estimasi_jadwal,
+      status,
+      catatan_pengajuan,
+      admin_id,
+      admin_name,
+    } = body;
 
-    const requiredFields = [
-      "nama_kegiatan",
-      "tujuan",
-      "latar_belakang",
-      "peserta_mahasiswa",
-      "jadwal_awal",
-      "jadwal_akhir",
-      "estimasi_jadwal",
-      "dana_diajukan",
-      "pic",
-      "upload_file",
-      "admin_id",
-      "admin_name",
-    ];
-
-    for (const field of requiredFields) {
-      if (isEmpty(body[field])) {
-        return NextResponse.json(
-          { error: `${field} is required` },
-          { status: 400, headers: corsHeaders },
-        );
-      }
+    // Validasi required fields
+    if (
+      !nomor_surat ||
+      !nama_kegiatan ||
+      !tujuan ||
+      !latar_belakang ||
+      !peserta ||
+      !jadwal_awal ||
+      !jadwal_akhir ||
+      !anggaran ||
+      !pic ||
+      !upload_file ||
+      !estimasi_jadwal ||
+      !admin_id ||
+      !admin_name
+    ) {
+      return NextResponse.json(
+        { error: "All required fields must be filled" },
+        { status: 400 },
+      );
     }
+
+    // Set default status jika tidak ada
+    const finalStatus = status || "pending";
 
     const { data, error } = await backendSupabase
       .from("lpj_database_tables")
       .insert([
         {
-          ...body,
-          status: body.status || "pending",
-          catatan_pengajuan: body.catatan_pengajuan || null,
-          peserta_dosen: body.peserta_dosen || null,
-          peserta_alumni: body.peserta_alumni || null,
-          dana_terpakai: body.dana_terpakai || null,
+          nomor_surat,
+          nama_kegiatan,
+          tujuan,
+          latar_belakang,
+          peserta,
+          jadwal_awal,
+          jadwal_akhir,
+          anggaran,
+          pic,
+          upload_file,
+          estimasi_jadwal,
+          status: finalStatus,
+          catatan_pengajuan: catatan_pengajuan || null,
+          admin_id,
+          admin_name,
         },
       ])
       .select()
       .single();
 
     if (error) {
+      // Handle foreign key violation
       if (error.code === "23503") {
         return NextResponse.json(
           { error: "Admin ID not found" },
-          { status: 400, headers: corsHeaders },
+          { status: 400 },
         );
       }
       throw error;
@@ -103,16 +135,19 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { message: "LPJ submitted successfully", lpj: data },
-      { status: 201, headers: corsHeaders },
+      { status: 201 },
     );
   } catch (err: any) {
+    console.error("Error creating LPJ:", err);
+    const statusCode = err.status || 500;
+    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: err.code || "INTERNAL_ERROR",
-        timeStamp: new Date().toISOString(),
+        code: errorCode,
+        timeStamp: new Date().toString(),
       },
-      { status: err.status || 500, headers: corsHeaders },
+      { status: statusCode },
     );
   }
 }
@@ -120,38 +155,107 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     verifyTokenFromRequest(req);
-    const body = await req.json();
 
-    if (!body.id) {
+    const body = await req.json();
+    const {
+      id,
+      nomor_surat,
+      nama_kegiatan,
+      tujuan,
+      latar_belakang,
+      peserta,
+      jadwal_awal,
+      jadwal_akhir,
+      anggaran,
+      pic,
+      upload_file,
+      estimasi_jadwal,
+      status,
+      catatan_pengajuan,
+      admin_id,
+      admin_name,
+    } = body;
+
+    if (!id) {
       return NextResponse.json(
         { error: "LPJ ID is required" },
-        { status: 400, headers: corsHeaders },
+        { status: 400 },
       );
     }
 
-    const { id, ...payload } = body;
+    // Validasi required fields
+    if (
+      !nomor_surat ||
+      !nama_kegiatan ||
+      !tujuan ||
+      !latar_belakang ||
+      !peserta ||
+      !jadwal_awal ||
+      !jadwal_akhir ||
+      !anggaran ||
+      !pic ||
+      !upload_file ||
+      !estimasi_jadwal ||
+      !admin_id ||
+      !admin_name
+    ) {
+      return NextResponse.json(
+        { error: "All required fields must be filled" },
+        { status: 400 },
+      );
+    }
 
     const { data, error } = await backendSupabase
       .from("lpj_database_tables")
-      .update(payload)
+      .update({
+        nomor_surat,
+        nama_kegiatan,
+        tujuan,
+        latar_belakang,
+        peserta,
+        jadwal_awal,
+        jadwal_akhir,
+        anggaran,
+        pic,
+        upload_file,
+        estimasi_jadwal,
+        status,
+        catatan_pengajuan: catatan_pengajuan || null,
+        admin_id,
+        admin_name,
+      })
       .eq("id", id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "LPJ not found" }, { status: 404 });
+      }
+      if (error.code === "23503") {
+        return NextResponse.json(
+          { error: "Admin ID not found" },
+          { status: 400 },
+        );
+      }
+      throw error;
+    }
 
-    return NextResponse.json(
-      { message: "LPJ updated successfully", lpj: data },
-      { headers: corsHeaders },
-    );
+    return NextResponse.json({
+      message: "LPJ updated successfully",
+      lpj: data,
+    });
   } catch (err: any) {
+    console.error("Error updating LPJ:", err);
+    const statusCode = err.status || 500;
+    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: err.code || "INTERNAL_ERROR",
-        timeStamp: new Date().toISOString(),
+        code: errorCode,
+        timeStamp: new Date().toString(),
       },
-      { status: err.status || 500, headers: corsHeaders },
+      { status: statusCode },
     );
   }
 }
@@ -159,12 +263,13 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     verifyTokenFromRequest(req);
+
     const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json(
         { error: "LPJ ID is required" },
-        { status: 400, headers: corsHeaders },
+        { status: 400 },
       );
     }
 
@@ -173,20 +278,25 @@ export async function DELETE(req: Request) {
       .delete()
       .eq("id", id);
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "LPJ not found" }, { status: 404 });
+      }
+      throw error;
+    }
 
-    return NextResponse.json(
-      { message: "LPJ deleted successfully" },
-      { headers: corsHeaders },
-    );
+    return NextResponse.json({ message: "LPJ deleted successfully" });
   } catch (err: any) {
+    console.error("Error deleting LPJ:", err);
+    const statusCode = err.status || 500;
+    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: err.code || "INTERNAL_ERROR",
-        timeStamp: new Date().toISOString(),
+        code: errorCode,
+        timeStamp: new Date().toString(),
       },
-      { status: err.status || 500, headers: corsHeaders },
+      { status: statusCode },
     );
   }
 }
