@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    verifyTokenFromRequest(req);
+    const user = verifyTokenFromRequest(req);
 
     const body = await req.json();
     const {
@@ -67,11 +67,8 @@ export async function POST(req: Request) {
       anggaran,
       pic,
       upload_file,
-      pengaju_id,
-      user_id,
     } = body;
 
-    // Validasi required fields
     if (
       !nomor_surat ||
       !nama_kegiatan ||
@@ -84,9 +81,7 @@ export async function POST(req: Request) {
       !jadwal_akhir ||
       !anggaran ||
       !pic ||
-      !upload_file ||
-      !pengaju_id ||
-      !user_id
+      !upload_file
     ) {
       return NextResponse.json(
         { error: "All fields are required" },
@@ -110,39 +105,28 @@ export async function POST(req: Request) {
           anggaran,
           pic,
           upload_file,
-          pengaju_id,
-          user_id,
+
+          // 🔥 FIX FK
+          pengaju_id: user.id,
+          user_id: user.id,
         },
       ])
       .select()
       .single();
 
-    if (error) {
-      // Handle unique constraint violation
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "Pengaju already has a TOR submission" },
-          { status: 409 },
-        );
-      }
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json(
       { message: "TOR submitted successfully", tor: data },
       { status: 201 },
     );
   } catch (err: any) {
-    console.error("Error creating TOR:", err);
-    const statusCode = err.status || 500;
-    const errorCode = err.code || "INTERNAL_ERROR";
     return NextResponse.json(
       {
         error: err.message,
-        code: errorCode,
-        timeStamp: new Date().toString(),
+        code: err.code || "INTERNAL_ERROR",
       },
-      { status: statusCode },
+      { status: 500 },
     );
   }
 }
