@@ -95,7 +95,6 @@ export async function POST(req: Request) {
       !latar_belakang ||
       !tanggal_pengajuan ||
       !nominal_pengajuan ||
-      !peserta ||
       !jadwal_awal ||
       !jadwal_akhir ||
       !anggaran ||
@@ -187,7 +186,6 @@ export async function PUT(req: Request) {
       !latar_belakang ||
       !tanggal_pengajuan ||
       !nominal_pengajuan ||
-      !peserta ||
       !jadwal_awal ||
       !jadwal_akhir ||
       !anggaran ||
